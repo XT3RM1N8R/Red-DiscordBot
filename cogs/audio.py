@@ -1137,18 +1137,17 @@ class Audio:
             return ("SONG_MISSING", (None, None))
         else:
             for album in os.listdir(self.local_playlist_path):
-                if os.path.isdir(os.path.join(self.local_playlist_path, album)) and albumName in album:
-                    albumName = os.path.basename(os.path.normpath(album))
-                    break
-            if (not os.path.isdir(os.path.join(self.local_playlist_path, albumName))):
-                print("No matching album was found.")
-                return ("ALBUM_MISSING", (None, None))
-            dir = os.path.join(self.local_playlist_path, albumName)
-            for filename in os.listdir(dir):
-                if name.lower() in filename.lower():
-                    return ("SUCCESS", (filename, albumName))
-            print("No matching song was found.")
-            return ("SONG_MISSING", (albumName, None))
+                if os.path.isdir(os.path.join(self.local_playlist_path, album)) and (albumName in album):
+                    if (os.path.isdir(os.path.join(self.local_playlist_path, albumName))):
+                        albumName = os.path.basename(os.path.normpath(album))
+                        dir = os.path.join(self.local_playlist_path, albumName)
+                        for filename in os.listdir(dir):
+                            if name.lower() in filename.lower():
+                                return ("SUCCESS", (filename, albumName))
+                        print("No matching song was found.")
+                        return ("SONG_MISSING", (albumName, None))
+            print("No matching album was found.")
+            return ("ALBUM_MISSING", (None, None))
 
     @commands.group(pass_context=True)
     async def audioset(self, ctx):
