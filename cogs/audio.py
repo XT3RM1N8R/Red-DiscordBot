@@ -1132,8 +1132,9 @@ class Audio:
                 for filename in files:
                     if name.lower() in filename.lower():
                         albumName = os.path.basename(os.path.normpath(root))
-                        return (filename, albumName)
-            print("No matching songs found.")
+                        return ("SUCCESS", (filename, albumName))
+            print("No matching song was found.")
+            return ("SONG_MISSING", (None, None))
         else:
             for album in os.listdir(self.local_playlist_path):
                 if os.path.isdir(os.path.join(self.local_playlist_path, album)) and albumName in album:
@@ -1141,12 +1142,13 @@ class Audio:
                     break
             if (not os.path.isdir(os.path.join(self.local_playlist_path, albumName))):
                 print("No matching album was found.")
-                return
+                return ("ALBUM_MISSING", (None, None))
             dir = os.path.join(self.local_playlist_path, albumName)
             for filename in os.listdir(dir):
                 if name.lower() in filename.lower():
-                    return (filename, albumName)
-            print("No matching songs found.")
+                    return ("SUCCESS", (filename, albumName))
+            print("No matching song was found.")
+            return ("SONG_MISSING", (albumName, None))
 
     @commands.group(pass_context=True)
     async def audioset(self, ctx):
@@ -1450,17 +1452,19 @@ class Audio:
             await self.bot.say("I'm already playing a song on this server!")
             return  # TODO: Possibly execute queue?
 
-        if (albumName == None):
-            filepath_data = self.find_track(name)
+        results = self.find_track(name, albumName)
+        
+        if (results[0] == "SUCCESS"):
+            (name, albumName) = results[1]
         else:
-            filepath_data = self.find_track(name, albumName)
-
-        if (filepath_data == None):
-            await self.bot.say("A match could not be found.")
+            if (results[0] == "SONG_MISSING"):
+                await self.bot.say("No matching song was found.")
+            elif (results[0] == "ALBUM_MISSING"):
+                await self.bot.say("No matching album was found.")
+            else:
+                await self.bot.say("Something has gone terribly wrong. Please contact an administrator.\n\nError ID: FIND_MISSING_EXCEPTION")
+                await self.bot.say("FIND_TRACK_EXIT_CODE: " + str(results[0]))
             return
-
-        name = filepath_data[0]
-        albumName = filepath_data[1]
         
         filepath = os.path.join(albumName, name)
 
@@ -1484,10 +1488,20 @@ class Audio:
     @checks.is_owner()
     async def find_local(self, name, albumName=None):
         """Finds and returns path of the first song which <name> is a substring of.\n\nInput [albumName] if the album is known."""
-        if (albumName == None):
-            (name, albumName) = self.find_track(name)
+        results = self.find_track(name, albumName)
+
+        if (results[0] == "SUCCESS"):
+            (name, albumName) = results[1]
         else:
-            (name, albumName) = self.find_track(name, albumName)
+            if (results[0] == "SONG_MISSING"):
+                await self.bot.say("No matching song was found.")
+            elif (results[0] == "ALBUM_MISSING"):
+                await self.bot.say("No matching album was found.")
+            else:
+                await self.bot.say("Something has gone terribly wrong. Please contact an administrator.\n\nError ID: FIND_TRACK_MISSING_EXCEPTION")
+                await self.bot.say("FIND_TRACK_EXIT_CODE: " + str(results[0]))
+            return
+
         await self.bot.say("Album: " + albumName)
         await self.bot.say("Filename: " + name)
 
