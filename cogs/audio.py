@@ -932,6 +932,7 @@ class Audio:
         ret = []
         for song in songlist:
             ret.append(os.path.join(name, song))
+        print(str(ret))
 
         ret_playlist = Playlist(server=server, name=name, playlist=ret)
         self._play_playlist(server, ret_playlist, channel)
@@ -1124,6 +1125,28 @@ class Audio:
             return "<{}>".format(url)
         
         return url.replace("[SEARCH:]", "")
+
+    def find_track(self, name, albumName=None):
+        if (albumName == None):
+            for root, dirs, files in os.walk(self.local_playlist_path):
+                for filename in files:
+                    if name.lower() in filename.lower():
+                        albumName = os.path.basename(os.path.normpath(root))
+                        return (filename, albumName)
+            print("No matching songs found.")
+        else:
+            for album in os.listdir(self.local_playlist_path):
+                if os.path.isdir(os.path.join(self.local_playlist_path, album)) and albumName in album:
+                    albumName = os.path.basename(os.path.normpath(album))
+                    break
+            if (not os.path.isdir(os.path.join(self.local_playlist_path, albumName))):
+                print("No matching album was found.")
+                return
+            dir = os.path.join(self.local_playlist_path, albumName)
+            for filename in os.listdir(dir):
+                if name.lower() in filename.lower():
+                    return (filename, albumName)
+            print("No matching songs found.")
 
     @commands.group(pass_context=True)
     async def audioset(self, ctx):
@@ -1387,6 +1410,65 @@ class Audio:
 
         self._play_local_playlist(server, name, channel)
 
+    @local.command(name="track", pass_context=True)
+    async def play_track_local(self, ctx, name, albumName=None):
+        """Plays a local track\n\nFinds and plays the first track which <name> is a substring of.\n\nInput [albumName] if the album is known."""
+        server = ctx.message.server
+        author = ctx.message.author
+        voice_channel = author.voice_channel
+        channel = ctx.message.channel
+
+        # Checking already connected, will join if not
+
+        if not self.voice_connected(server):
+            try:
+                self.has_connect_perm(author, server)
+            except AuthorNotConnected:
+                await self.bot.say("You must join a voice channel before I can"
+                                   " play anything.")
+                return
+            except UnauthorizedConnect:
+                await self.bot.say("I don't have permissions to join your"
+                                   " voice channel.")
+                return
+            except UnauthorizedSpeak:
+                await self.bot.say("I don't have permissions to speak in your"
+                                   " voice channel.")
+                return
+            except ChannelUserLimit:
+                await self.bot.say("Your voice channel is full.")
+                return
+            else:
+                await self._join_voice_channel(voice_channel)
+        else:  # We are connected but not to the right channel
+            if self.voice_client(server).channel != voice_channel:
+                pass  # TODO: Perms
+
+        # Checking if playing in current server
+
+        if self.is_playing(server):
+            await self.bot.say("I'm already playing a song on this server!")
+            return  # TODO: Possibly execute queue?
+
+        if (albumName == None):
+            filepath_data = self.find_track(name)
+        else:
+            filepath_data = self.find_track(name, albumName)
+
+        if (filepath_data == None):
+            await self.bot.say("A match could not be found.")
+            return
+
+        name = filepath_data[0]
+        albumName = filepath_data[1]
+        
+        filepath = os.path.join(albumName, name)
+
+        ret = [filepath]
+
+        ret_playlist = Playlist(server=server, name=name, playlist=ret)
+        self._play_playlist(server, ret_playlist, channel)
+
     @local.command(name="list", no_pm=True)
     async def list_local(self):
         """Lists local playlists"""
@@ -1403,27 +1485,11 @@ class Audio:
     async def find_local(self, name, albumName=None):
         """Finds and returns path of the first song which <name> is a substring of.\n\nInput [albumName] if the album is known."""
         if (albumName == None):
-            for root, dirs, files in os.walk(self.local_playlist_path):
-                for filename in files:
-                    if name.lower() in filename.lower():
-                        albumName = os.path.basename(os.path.normpath(root))
-                        await self.bot.say("Album: " + albumName)
-                        await self.bot.say("Filename: " + filename)
-                        return
-            await self.bot.say("No matching songs found.")
+            (name, albumName) = find_track(name)
         else:
-            for album in os.listdir(self.local_playlist_path):
-                if os.path.isdir(os.path.join(self.local_playlist_path, album)) and albumName in album:
-                    albumName = os.path.basename(os.path.normpath(album))
-                    break
-            dir = os.path.join(self.local_playlist_path, albumName)
-            for filename in os.listdir(dir):
-                if name.lower() in filename.lower():
-                    await self.bot.say("Album: " + albumName)
-                    await self.bot.say("Filename: " + filename)
-                    return
-        await self.bot.say("No matching songs found.")
-        
+            (name, albumName) = find_track(name, albumName)
+        await self.bot.say("Album: " + albumName)
+        await self.bot.say("Filename: " + filename)
 
     @commands.command(pass_context=True, no_pm=True)
     async def pause(self, ctx):
