@@ -1400,7 +1400,7 @@ class Audio:
 			
     @local.command(name="find", no_pm=True)
     @checks.is_owner()
-    async def find_local(self, *, name):
+    async def find_local(self, name):
         """Finds and returns path of song which <name> is a substring of"""
         for root, dirs, files in os.walk(self.local_playlist_path):
             for filename in files:
