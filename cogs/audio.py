@@ -1403,9 +1403,11 @@ class Audio:
     async def find_local(self, *, name):
         """Finds and returns path of song which <name> is a substring of"""
         for root, dirs, files in os.walk(self.local_playlist_path):
-            for element in files:
-                if name in element:
-                    await self.bot.say(os.path.join(root, element))
+            for filename in files:
+                if name.lower() in filename.lower():
+                    albumName = os.path.basename(os.path.normpath(root))
+                    await self.bot.say("Album: " + albumName)
+                    await self.bot.say("Filename: " + filename)
                     return
         await self.bot.say("No matching songs found.")
         
