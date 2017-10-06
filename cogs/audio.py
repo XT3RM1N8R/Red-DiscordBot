@@ -1485,11 +1485,11 @@ class Audio:
     async def find_local(self, name, albumName=None):
         """Finds and returns path of the first song which <name> is a substring of.\n\nInput [albumName] if the album is known."""
         if (albumName == None):
-            (name, albumName) = find_track(name)
+            (name, albumName) = self.find_track(name)
         else:
-            (name, albumName) = find_track(name, albumName)
+            (name, albumName) = self.find_track(name, albumName)
         await self.bot.say("Album: " + albumName)
-        await self.bot.say("Filename: " + filename)
+        await self.bot.say("Filename: " + name)
 
     @commands.command(pass_context=True, no_pm=True)
     async def pause(self, ctx):
