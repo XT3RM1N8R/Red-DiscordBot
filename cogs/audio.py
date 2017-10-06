@@ -1397,6 +1397,20 @@ class Audio:
                 await self.bot.say(page)
         else:
             await self.bot.say("There are no playlists.")
+			
+    @local.command(name="find", no_pm=True)
+    @checks.is_owner()
+    async def find_local(self, *, name):
+        """Finds and returns path of song which <name> is a substring of"""
+        for root, dirs, files in os.walk(self.local_playlist_path):
+            for filename in files:
+                if name.lower() in filename.lower():
+                    albumName = os.path.basename(os.path.normpath(root))
+                    await self.bot.say("Album: " + albumName)
+                    await self.bot.say("Filename: " + filename)
+                    return
+        await self.bot.say("No matching songs found.")
+        
 
     @commands.command(pass_context=True, no_pm=True)
     async def pause(self, ctx):
