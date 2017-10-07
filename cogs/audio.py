@@ -1144,11 +1144,11 @@ class Audio:
                 if os.path.isdir(os.path.join(self.local_playlist_path, album)):
                     if (albumName.lower() in album.lower()):
                         albumFound = True
-                        albumName = os.path.basename(os.path.normpath(album))
-                        dir = os.path.join(self.local_playlist_path, albumName)
+                        albumTemp = os.path.basename(os.path.normpath(album))
+                        dir = os.path.join(self.local_playlist_path, albumTemp)
                         for filename in os.listdir(dir):
                             if name.lower() in filename.lower():
-                                return ("SUCCESS", (filename, albumName))
+                                return ("SUCCESS", (filename, albumTemp))
             if (albumFound):
                 print("No matching song was found.")
                 return ("SONG_MISSING", (albumName, None))
