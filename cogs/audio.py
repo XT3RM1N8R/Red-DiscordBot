@@ -1138,9 +1138,6 @@ class Audio:
         else:
             albumFound = False
             for album in os.listdir(self.local_playlist_path):
-                print("albumName: " + str(albumName.lower()))
-                print("album: " + str(album.lower()))
-                print("albumName.lower() in album.lower(): " + str(albumName.lower() in album.lower()))
                 if os.path.isdir(os.path.join(self.local_playlist_path, album)):
                     if (albumName.lower() in album.lower()):
                         albumFound = True
