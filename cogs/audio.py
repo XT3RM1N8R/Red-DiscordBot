@@ -1409,11 +1409,13 @@ class Audio:
 
         lists = self._list_local_playlists()
 
-        if not any(map(lambda l: os.path.split(l)[1] == name, lists)):
-            await self.bot.say("Local playlist not found.")
-            return
-
-        self._play_local_playlist(server, name, channel)
+        for album in os.listdir(self.local_playlist_path):
+                if os.path.isdir(os.path.join(self.local_playlist_path, album)):
+                    if (name.lower() in album.lower()):
+                        name = os.path.basename(os.path.normpath(album))
+                        self._play_local_playlist(server, name, channel)
+                        return
+        await self.bot.say("Local playlist not found.")
 
     @local.command(name="track", pass_context=True, no_pm=True)
     async def _play_track_local(self, ctx, *, user_input):
