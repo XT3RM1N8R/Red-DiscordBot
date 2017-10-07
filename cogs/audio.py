@@ -1429,8 +1429,6 @@ class Audio:
             (name, albumName) = user_input.split('/')
             name = name.strip()
             albumName = albumName.strip()
-            await self.bot.say("Song: " + str(name))
-            await self.bot.say("Album: " + str(albumName))
         else:
             await self.bot.say("Too many arguments were given!")
             return      
@@ -1522,8 +1520,6 @@ class Audio:
             (name, albumName) = user_input.split('/')
             name = name.strip()
             albumName = albumName.strip()
-            await self.bot.say("Song: " + str(name))
-            await self.bot.say("Album: " + str(albumName))
         else:
             await self.bot.say("Too many arguments were given!")
             return      
