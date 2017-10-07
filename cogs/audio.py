@@ -1411,13 +1411,29 @@ class Audio:
 
         self._play_local_playlist(server, name, channel)
 
-    @local.command(name="track", pass_context=True)
-    async def play_track_local(self, ctx, name, albumName=None):
-        """Plays a local track\n\nFinds and plays the first track which <name> is a substring of.\n\nInput [albumName] if the album is known."""
+    @local.command(name="track", pass_context=True, no_pm=True)
+    async def _play_track_local(self, ctx, *, user_input):
+        """<user_input>:\n    <name>\nOR\n    <name>/<albumName>\n\nFinds and plays the first local track which <name> is a substring of.\n\nOptionally, input <albumName> if the album is known."""
         server = ctx.message.server
         author = ctx.message.author
         voice_channel = author.voice_channel
         channel = ctx.message.channel
+        count = user_input.count('/')
+        
+        if (count == 0):
+            await self.bot.say("Searching for song.")
+            name = user_input.strip()
+            albumName = None
+        elif (count == 1):
+            await self.bot.say("Searching for song in album.")
+            (name, albumName) = user_input.split('/')
+            name = name.strip()
+            albumName = albumName.strip()
+            await self.bot.say("Song: " + str(name))
+            await self.bot.say("Album: " + str(albumName))
+        else:
+            await self.bot.say("Too many arguments were given!")
+            return      
 
         # Checking already connected, will join if not
 
@@ -1450,6 +1466,13 @@ class Audio:
         if self.is_playing(server):
             await self.bot.say("I'm already playing a song on this server!")
             return  # TODO: Possibly execute queue?
+
+        # If not playing, spawn a downloader if it doesn't exist and begin
+        #   downloading the next song
+
+        if self.currently_downloading(server):
+            await self.bot.say("I'm already downloading a file!")
+            return
 
         results = self.find_track(name, albumName)
         
@@ -1485,8 +1508,26 @@ class Audio:
 			
     @local.command(name="find", no_pm=True)
     @checks.is_owner()
-    async def find_local(self, name, albumName=None):
-        """Finds and returns path of the first song which <name> is a substring of.\n\nInput [albumName] if the album is known."""
+    async def find_local(self, *, user_input):
+        """<user_input>:\n    <name>\nOR\n    <name>/<albumName>\n\nFinds and returns the path of the first song which <name> is a substring of.\n\nOptionally, input <albumName> if the album is known."""
+
+        count = user_input.count('/')
+        
+        if (count == 0):
+            await self.bot.say("Searching for song.")
+            name = user_input.strip()
+            albumName = None
+        elif (count == 1):
+            await self.bot.say("Searching for song in album.")
+            (name, albumName) = user_input.split('/')
+            name = name.strip()
+            albumName = albumName.strip()
+            await self.bot.say("Song: " + str(name))
+            await self.bot.say("Album: " + str(albumName))
+        else:
+            await self.bot.say("Too many arguments were given!")
+            return      
+
         results = self.find_track(name, albumName)
 
         if (results[0] == "SUCCESS"):
