@@ -6,6 +6,3 @@ data
 !data/audio/playlists/*
 *.exe
 *.dll
-lib
-start_red.bat
-start_red_autorestart.bat
