@@ -1361,12 +1361,32 @@ class Audio:
             await send_cmd_help(ctx)
 
     @local.command(name="start", pass_context=True, no_pm=True)
-    async def play_local(self, ctx, *, name):
-        """Plays a local playlist"""
+    async def play_local(self, ctx, *, user_input):
+        """Plays a local playlist\n<user_input>:\n    <albumName>\nOR\n    <albumName>/<arguments>\n\nFinds and plays the first album <albumName> is a substring of.\n\nOptionally, input "-e" as the <arguments> to require exact name matches."""
         server = ctx.message.server
         author = ctx.message.author
         voice_channel = author.voice_channel
         channel = ctx.message.channel
+        count = user_input.count('/')
+
+        if (count == 0):
+            await self.bot.say("Searching for album.")
+            name = user_input.strip()
+            arguments = None
+            predictive = True
+        elif (count == 1):
+            await self.bot.say("Searching for song in album.")
+            (name, arguments) = user_input.split('/')
+            name = name.strip()
+            arguments = arguments.strip()
+            if (arguments == "-e"):
+                predictive = False
+            else:
+                await self.bot.say("Argument was not understood!")
+                predictive = True
+        else:
+            await self.bot.say("Too many arguments were given!")
+            return      
 
         # Checking already connected, will join if not
 
@@ -1411,15 +1431,21 @@ class Audio:
 
         for album in os.listdir(self.local_playlist_path):
                 if os.path.isdir(os.path.join(self.local_playlist_path, album)):
-                    if (name.lower() in album.lower()):
-                        name = os.path.basename(os.path.normpath(album))
-                        self._play_local_playlist(server, name, channel)
-                        return
+                    if (predictive):
+                        if (name.lower() in album.lower()):
+                            name = os.path.basename(os.path.normpath(album))
+                            self._play_local_playlist(server, name, channel)
+                            return
+                    else:
+                        if (name.lower() == album.lower()):
+                            name = os.path.basename(os.path.normpath(album))
+                            self._play_local_playlist(server, name, channel)
+                            return
         await self.bot.say("Local playlist not found.")
 
     @local.command(name="track", pass_context=True, no_pm=True)
     async def _play_track_local(self, ctx, *, user_input):
-        """<user_input>:\n    <name>\nOR\n    <name>/<albumName>\n\nFinds and plays the first local track which <name> is a substring of.\n\nOptionally, input <albumName> if the album is known."""
+        """Plays a local track\n<user_input>:\n    <name>\nOR\n    <name>/<albumName>\n\nFinds and plays the first local track which <name> is a substring of.\n\nOptionally, input <albumName> if the album is known."""
         server = ctx.message.server
         author = ctx.message.author
         voice_channel = author.voice_channel
@@ -1513,7 +1539,7 @@ class Audio:
     @local.command(name="find", no_pm=True)
     @checks.is_owner()
     async def find_local(self, *, user_input):
-        """<user_input>:\n    <name>\nOR\n    <name>/<albumName>\n\nFinds and returns the path of the first song which <name> is a substring of.\n\nOptionally, input <albumName> if the album is known."""
+        """Finds a local track\n<user_input>:\n    <name>\nOR\n    <name>/<albumName>\n\nFinds and returns the path of the first song which <name> is a substring of.\n\nOptionally, input <albumName> if the album is known."""
 
         count = user_input.count('/')
         
